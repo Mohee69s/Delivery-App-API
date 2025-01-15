@@ -13,35 +13,51 @@ class AdminProductController extends Controller
             'name' => 'required',
             'store_id' => 'required|exists:stores,id',
             'price' => 'required|numeric',
+            'description' => 'required',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'quantity' => 'required|numeric'
         ]);
-        $product = Product::create($request->all());
-        return response()->json([
-            'message' => 'Product created successfully',
-            'product' => $product
-        ]);
+        try{
+            $image = $request->file('image');
+            $destinationPath =  'C:\\Users\\user\\Desktop\\Projecttest\\storage\\app\\public\\images';
+            $imageName = time() . '.' . $image->getClientOriginalName();
+            $image->move($destinationPath, $imageName);
+        }catch (\Exception $exception){
+            return response()->json(['error' => $exception->getMessage()]);
+        }
+        Product::create($request->except('_token'));
+        return redirect('/admin/page')->with('message', 'Product added!');
     }
-    public function destroy($id)
+
+    public function destroy(Request $request)
     {
-        $product = Product::findOrFail($id);
+
+        $product = Product::findOrFail($request->id);
         $product->delete();
-        return response()->json([
-            'message' => 'Product deleted successfully',
-        ]);
+        return redirect('/admin/page')->with('message', 'Product has been deleted');
     }
-    public function update(Request $request, $id){
+
+    public function update(Request $request)
+    {
         $request->validate([
+            'id' => 'required|exists:products,id',
             'name' => 'required',
-            'store_id' => 'required|exists:stores,id',
             'price' => 'required|numeric',
-            'image' => 'mimes:jpg,jpeg,png',
-            'quantity' => 'required|numeric',
+            'image' => 'mimes:jpg,jpeg,png|max:2048',
+            'quantity' => 'required|image|numeric',
             'description' => 'required',
         ]);
-        $product  = Product::find($id);
-        $product->update($request->all());
-        return response()->json([
-            'message' => 'Product updated successfully',
-            'product' => $product
-        ]);
+        try{
+            $image = $request->file('image');
+            $destinationPath = 'C:\\Users\\user\\Desktop\\Projecttest\\storage\\app\\public\\images';
+            $imageName = time() . '.' . $image->getClientOriginalName();
+            $image->move($destinationPath, $imageName);
+        }catch (\Exception $exception){
+            return response()->json(['error' => $exception->getMessage()]);
+        }
+        $product = Product::find($request->id);
+        $product->update($request->except(['_token', '_method']));
+        return redirect('admin/page')->with('message', 'Product updated successfully');
+
     }
 }

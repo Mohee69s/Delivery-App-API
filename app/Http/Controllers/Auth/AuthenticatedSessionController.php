@@ -83,7 +83,12 @@ class AuthenticatedSessionController extends Controller
         }
 
         // Create a Sanctum token
-        $token = $user->createToken('authToken')->plainTextToken;
+        if ($user->is_admin) {
+            $token = $user->createToken('adminToken')->plainTextToken;
+            return redirect('/adminhome?token=' . $token);
+        } else {
+            $token = $user->createToken('authToken')->plainTextToken;
+        }
 
         return response()->json([
             'message' => 'Login successful',
@@ -103,5 +108,13 @@ class AuthenticatedSessionController extends Controller
         return response()->json([
             'message' => 'Logged out successfully.',
         ]);
+    }
+    public function adminLogin(Request $request)
+    {
+        $request->validate([
+            'phone_number' => ['required', 'string', 'min:10'],
+            'password' => ['required', 'string'],
+        ]);
+
     }
 }

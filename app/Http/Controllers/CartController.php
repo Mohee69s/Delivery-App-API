@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +20,7 @@ class CartController extends Controller
                 'message' => 'Cart is empty',
             ]);
         }
+
         return response()->json([
             'cartItems' => $cartItems,
         ]);
@@ -38,6 +41,7 @@ class CartController extends Controller
             'user_id' => $userId,
             'product_id' => $request->product_id,
             'quantity' => $request->quantity,
+            'price' => Product::where('id', $request->product_id)->first()->price,
         ]);
 
         $quantity = $request->input('quantity');
@@ -109,5 +113,33 @@ class CartController extends Controller
 
         return response()->json(['message' => 'Product removed from cart successfully']);
     }
-
+    public function placeOrder(Request $request){
+        try{
+            $userId = auth()->id();
+            $cartItems = Cart::where('user_id', $request->user()->id)->with('products')->get();
+            $totalPrice = 0;
+            foreach ($cartItems as $cartItem) {
+                $totalPrice += Product::where('id', $cartItem->product_id)->first()->price * $cartItem->quantity;
+            }
+            $order = Order::create([
+                'user_id' => $userId,
+                'total' => $totalPrice,
+            ]);
+            foreach ($cartItems as $cartItem) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $cartItem->product_id,
+                    'quantity' => $cartItem->quantity,
+                    'price' => Product::where('id', $cartItem->product_id)->first()->price,
+                ]);
+            }
+            return response()->json([
+                'message' => 'Order created successfully',
+                'order' => $order
+            ]);
+        }
+        catch(\Exception $e){
+            return response()->json(['message' => $e->getMessage()]);
+        }
+    }
 }

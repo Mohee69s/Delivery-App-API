@@ -15,14 +15,12 @@ class PersonalInformationController extends Controller
     }
     public function store(Request $request){
         $data = $request->validate([
-            'first_name' => 'required',
-            'last_name' => 'required',
+            'name' => 'required',
             'profile_picture' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'location' => 'required',
         ]);
         $user=Auth::user();
-        $user->first_name = $data['first_name'];
-        $user->last_name = $data['last_name'];
+        $user->name = $data['name'];
         $user->profile_picture = $data['profile_picture'];
         $user->location = $data['location'];
         $user->save();

@@ -20,6 +20,7 @@ class ProductFactory extends Factory
         return [
             'name'=>fake()->name(),
             'store_id' =>Store::factory(),
+            'price'=>$this->faker->numberBetween(1,100),
         ];
     }
 }

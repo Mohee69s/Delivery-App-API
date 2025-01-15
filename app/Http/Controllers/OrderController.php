@@ -7,75 +7,27 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+
+    public function index(Request $request){
+        $id=$request->user()->id;
+        $orders=Order::where('user_id',$id)->get();
+        return response()->json([
+            'message'=>'success',
+            'orders'=>$orders
+        ]);
+    }
+    public function show($id)
     {
-        $orders=Order::where('user_id',$request->user()->id)->get();
-        if ($orders->isEmpty()) {
+        $user_id=Request()->user()->id;
+        $order=Order::where('user_id',$user_id)->where('id',$id)->with('items')->first();
+        if(!$order){
             return response()->json([
-                'message' => 'No orders found',
+                'message'=>'empty',
             ]);
         }
         return response()->json([
-            'orders' => $orders,
+            'message'=>'success',
+            'order'=>$order
         ]);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'user_id' => 'required',
-            'product_id' => 'required',
-        ]);
-        $order=Order::updateOrCreate(
-            [
-                'user_id'=>$request->user()->id,
-                'product_id' => $request->product_id
-            ],
-            [
-                'quantity' => \DB::raw('quantity + {$request->quantity}'),
-            ]
-        );
-        return response()->json([
-            'message' => 'Order created successfully',
-            'order' => $order,
-        ]);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Order $order)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Order $order)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Order $order)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Order $order)
-    {
-        //
     }
 }
