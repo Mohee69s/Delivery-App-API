@@ -71,9 +71,6 @@
         <label for="store_id">Store ID</label>
         <input type="text" id="store_id" name="store_id" required>
 
-        <label for="description">Description</label>
-        <textarea id="description" name="description" required></textarea>
-
         <label for="price">Price ($)</label>
         <input type="number" id="price" name="price" required min="0" step="0.01">
 

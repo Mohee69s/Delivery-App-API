@@ -36,19 +36,12 @@ class CartController extends Controller
 
         $userId = auth()->id();
 
-        // Insert a new cart item
         Cart::create([
             'user_id' => $userId,
             'product_id' => $request->product_id,
             'quantity' => $request->quantity,
             'price' => Product::where('id', $request->product_id)->first()->price,
         ]);
-
-        $quantity = $request->input('quantity');
-        $productId = $request->input('product_id');
-        $product = Product::find($productId);
-        $product->quantity = $product->quantity - $quantity;
-        $product->save();
 
         return response()->json(['message' => 'Product added to cart successfully']);
     }
@@ -57,31 +50,21 @@ class CartController extends Controller
     {
         $userId = auth()->id();
 
-        // Validate the request data (ensure quantity is an integer and greater than 0)
         $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Find the cart item by its ID and ensure it belongs to the authenticated user
         $cartItem = Cart::where('id', $cartItemId)
             ->where('user_id', $userId)
             ->first();
 
-        // If the cart item is not found or doesn't belong to the user
+
         if (!$cartItem) {
             return response()->json(['message' => 'Cart item not found or does not belong to the user'], 404);
         }
 
-        // Update the quantity
         $cartItem->quantity = $request->quantity;
         $cartItem->save();
-
-        $productId = $cartItem->product_id;
-        $quantity = $request->input('quantity');
-        $product = Product::find($productId);
-        $product->quantity = $product->quantity - $quantity;
-        $product->save();
-
 
 
         return response()->json([
@@ -94,7 +77,6 @@ class CartController extends Controller
     {
         $userId = auth()->id();
 
-        // Find the cart item by ID and ensure it belongs to the authenticated user
         $cartItem = Cart::where('id', $cartItemId)
             ->where('user_id', $userId)
             ->first();
@@ -102,44 +84,67 @@ class CartController extends Controller
         if (!$cartItem) {
             return response()->json(['message' => 'Cart item not found or does not belong to the user'], 404);
         }
-
-        $productId = $cartItem->product_id;
-        $quantity = $cartItem->quantity;
-        $product=Product::find($productId);
-        $product->quantity = $product->quantity + $quantity;
-        $product->save();
-        // Delete the cart item
         $cartItem->delete();
 
         return response()->json(['message' => 'Product removed from cart successfully']);
     }
-    public function placeOrder(Request $request){
-        try{
+    public function placeOrder(Request $request)
+    {
+        try {
             $userId = auth()->id();
-            $cartItems = Cart::where('user_id', $request->user()->id)->with('products')->get();
-            $totalPrice = 0;
-            foreach ($cartItems as $cartItem) {
-                $totalPrice += Product::where('id', $cartItem->product_id)->first()->price * $cartItem->quantity;
+
+            $cartItems = Cart::where('user_id', $userId)->with('products')->get();
+
+            if ($cartItems->isEmpty()) {
+                return response()->json(['message' => 'Cart is empty'], 400);
             }
+
+            $totalPrice = 0;
+
+            foreach ($cartItems as $cartItem) {
+                $product = Product::find($cartItem->product_id);
+
+                if (!$product) {
+                    return response()->json(['message' => 'Product not found'], 404);
+                }
+
+                if ($product->quantity < $cartItem->quantity) {
+                    return response()->json([
+                        'message' => "Insufficient stock for product: {$product->name}",
+                    ], 400);
+                }
+
+                $totalPrice += $product->price * $cartItem->quantity;
+
+                $product->quantity -= $cartItem->quantity;
+                $product->save();
+            }
+
+
             $order = Order::create([
                 'user_id' => $userId,
                 'total' => $totalPrice,
             ]);
+
             foreach ($cartItems as $cartItem) {
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cartItem->product_id,
                     'quantity' => $cartItem->quantity,
-                    'price' => Product::where('id', $cartItem->product_id)->first()->price,
+                    'price' => Product::find($cartItem->product_id)->price,
                 ]);
             }
+
+            Cart::where('user_id', $userId)->delete();
+
             return response()->json([
                 'message' => 'Order created successfully',
-                'order' => $order
+                'order' => $order,
             ]);
-        }
-        catch(\Exception $e){
-            return response()->json(['message' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
+
 }

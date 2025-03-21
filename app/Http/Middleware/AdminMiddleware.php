@@ -18,7 +18,7 @@ class AdminMiddleware
                 return redirect('/admin/login');
         }
 
-        return redirect('/admin/login'); // Redirect if not authenticated as admin
+        return redirect('/admin/login');
 
     }
 }

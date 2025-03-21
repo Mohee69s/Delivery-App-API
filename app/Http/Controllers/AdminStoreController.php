@@ -9,22 +9,29 @@ class AdminStoreController extends Controller
 {
     public function store(Request $request)
     {
-
         $request->validate([
             'name' => 'required|string',
+            'type' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-        try{
-            $image = $request->file('image');
-            $destinationPath = 'C:\Users\user\Desktop\Projecttest\storage\app\public\images';
-            $imageName = time() . '.' . $image->getClientOriginalName();
-            $image->move($destinationPath, $imageName);
-        }catch (\Exception $exception){
-            return response()->json(['error' => $exception->getMessage()]);
+
+        $imageUrl = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('images/stores', 'public');
+            $imageUrl = "storage/$imagePath"; // Generate the URL for the image
+        } else {
+            return redirect()->back()->with('error', 'Image upload failed');
         }
-        Store::create(['name' => $request->name, 'type' => $request->type,'image'=>$request->image]);
-        return redirect('admin/page')->with('message', 'Store has been added');
+
+        Store::create([
+            'name' => $request->name,
+            'type' => $request->type,
+            'image' => $imageUrl,
+        ]);
+
+        return redirect('admin/page')->with('message', 'Store has been added successfully');
     }
+
 
     public function destroy(Request $request)
     {

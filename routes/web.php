@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return response()->json([
-        'message' => "working"
+        'message' => "an error occurred"
     ]);
 });
 
@@ -22,7 +22,6 @@ Route::middleware(AdminMiddleware::class)->group(function () {
     Route::view('/deleteastore', 'deleteAStore');
     Route::delete('/admin/stores', [AdminStoreController::class, 'destroy']);
 
-    // Product routes
     Route::view('/addaproduct', 'addAProduct');
     Route::post('/admin/products', [AdminProductController::class, 'store']);
 

@@ -9,24 +9,34 @@ use Illuminate\Support\Facades\Auth;
 
 class PersonalInformationController extends Controller
 {
-    public function index(User $user)
+    public function index()
     {
-        return $user;
+        return auth()->user();
     }
-    public function store(Request $request){
+
+    public function update(Request $request)
+    {
         $data = $request->validate([
             'name' => 'required',
             'profile_picture' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'location' => 'required',
         ]);
-        $user=Auth::user();
+
+        $user = auth()->user();
+
         $user->name = $data['name'];
-        $user->profile_picture = $data['profile_picture'];
         $user->location = $data['location'];
+
+        if ($request->hasFile('profile_picture')) {
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $user->profile_picture = $path;
+        }
+
         $user->save();
+
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user'=>$user
+            'user' => $user
         ]);
     }
 }

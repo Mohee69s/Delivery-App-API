@@ -7,9 +7,6 @@ use Illuminate\Http\Request;
 
 class FavoritesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $user = auth()->user();
@@ -18,9 +15,6 @@ class FavoritesController extends Controller
         return response()->json(['favorites' => $favorites]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -34,15 +28,10 @@ class FavoritesController extends Controller
             'message'=>'product added to favorites'
         ]);
     }
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($favorite)
     {
         $user_id = auth()->id();
 
-
-        // Remove the product from favorites
         $favored = Favorites::where('id',$favorite)
             ->where('user_id',$user_id)
             ->first();

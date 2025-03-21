@@ -13,21 +13,27 @@ class AdminProductController extends Controller
             'name' => 'required',
             'store_id' => 'required|exists:stores,id',
             'price' => 'required|numeric',
-            'description' => 'required',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'quantity' => 'required|numeric'
         ]);
-        try{
-            $image = $request->file('image');
-            $destinationPath =  'C:\\Users\\user\\Desktop\\Projecttest\\storage\\app\\public\\images';
-            $imageName = time() . '.' . $image->getClientOriginalName();
-            $image->move($destinationPath, $imageName);
-        }catch (\Exception $exception){
-            return response()->json(['error' => $exception->getMessage()]);
+
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('images/products', 'public');
+            $imageUrl = "storage/$imagePath";
         }
-        Product::create($request->except('_token'));
+
+        Product::create([
+            'name' => $request->input('name'),
+            'store_id' => $request->input('store_id'),
+            'price' => $request->input('price'),
+            'image' => $imageUrl,
+            'quantity' => $request->input('quantity'),
+        ]);
+
         return redirect('/admin/page')->with('message', 'Product added!');
     }
+
 
     public function destroy(Request $request)
     {

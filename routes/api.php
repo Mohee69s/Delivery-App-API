@@ -18,15 +18,12 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [RegisteredUserController::class, 'store']); // POST is standard for creating new resources
 Route::post('/login', [AuthenticatedSessionController::class, 'store']); // POST is standard for login
 
-// Authenticated Routes (Protected by Sanctum Middleware)
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
     // Store Routes
-//    Route::get('/stores', [StoreController::class, 'index']);
     Route::get('/stores/{type}', [StoreController::class, 'index']);
     Route::get('/stores/{type}/{store}', [StoreController::class, 'show']);
-
     // Product Routes
     Route::get('/products/{product}', [ProductController::class, 'show']);
 
@@ -52,6 +49,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //Orders
     Route::get('/orders',[OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
 });
 
 
